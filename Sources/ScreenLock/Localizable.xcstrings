@@ -1,0 +1,169 @@
+{
+  "sourceLanguage" : "en",
+  "strings" : {
+    "Authentication failed." : {
+      "comment" : "Fallback message shown on the lock screen when Touch ID/password verification fails without a system error description.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autenticazione non riuscita."
+          }
+        }
+      }
+    },
+    "Authentication is not available on this Mac." : {
+      "comment" : "Fallback message shown on the lock screen when no authentication policy can be evaluated.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autenticazione non disponibile su questo Mac."
+          }
+        }
+      }
+    },
+    "Authentication Unavailable" : {
+      "comment" : "Alert title shown when the lock cannot be engaged because no authentication method is available.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Autenticazione non disponibile"
+          }
+        }
+      }
+    },
+    "Cancel" : {
+      "comment" : "Cancel button title of the Touch ID/password prompt.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Annulla"
+          }
+        }
+      }
+    },
+    "Lock Now (⌃⌥⌘L)" : {
+      "comment" : "Status bar menu item that locks the screen; the shortcut in parentheses is the global hotkey.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Blocca ora (⌃⌥⌘L)"
+          }
+        }
+      }
+    },
+    "Press ⌃⌥⌘L to try again" : {
+      "comment" : "Hint on the lock screen explaining how to show the authentication prompt again.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premi ⌃⌥⌘L per riprovare"
+          }
+        }
+      }
+    },
+    "Quit" : {
+      "comment" : "Status bar menu item that quits the app.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Esci"
+          }
+        }
+      }
+    },
+    "Screen Locked" : {
+      "comment" : "Title shown on the full-screen lock window.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Schermo bloccato"
+          }
+        }
+      }
+    },
+    "Show menu bar icon" : {
+      "comment" : "Switch in the bottom-left corner of the lock screen that shows or hides the menu bar icon.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra icona nella barra dei menu"
+          }
+        }
+      }
+    },
+    "Show Menu Bar Icon" : {
+      "comment" : "Status bar menu toggle; when off the menu bar icon is hidden and the app stays reachable through the global hotkey.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Mostra icona nella barra dei menu"
+          }
+        }
+      }
+    },
+    "The lock can't be engaged: neither Touch ID nor the login password can be verified on this Mac (or in this session). To avoid getting locked out, the lock won't be activated." : {
+      "comment" : "Alert message explaining why the lock was not engaged.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Impossibile attivare il blocco: né Touch ID né la password di login possono essere verificati su questo Mac (o in questa sessione). Per evitare di restare bloccati, il lock non verrà attivato."
+          }
+        }
+      }
+    },
+    "unlock the screen" : {
+      "comment" : "Reason passed to LocalAuthentication; macOS displays it as “ScreenLock is trying to <reason>.”, so it must complete that sentence.",
+      "extractionState" : "stale",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "sbloccare lo schermo"
+          }
+        }
+      }
+    },
+    "Verifying…" : {
+      "comment" : "Lock screen status while the Touch ID/password prompt is on screen.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Verifica in corso…"
+          }
+        }
+      }
+    },
+    "Waiting for authentication…" : {
+      "comment" : "Lock screen status before the authentication prompt appears.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "In attesa di autenticazione…"
+          }
+        }
+      }
+    }
+  },
+  "version" : "1.0"
+}

@@ -1,0 +1,10 @@
+# Generati da Tuist
+*.xcodeproj
+*.xcworkspace
+Derived/
+
+# Build
+build/
+
+.DS_Store
+xcuserdata/
