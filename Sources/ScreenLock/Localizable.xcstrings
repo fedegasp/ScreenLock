@@ -72,6 +72,17 @@
         }
       }
     },
+    "Press ⌃⌥⌘L to unlock" : {
+      "comment" : "Hint on the lock screen explaining how to bring up the authentication prompt.",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Premi ⌃⌥⌘L per sbloccare"
+          }
+        }
+      }
+    },
     "Quit" : {
       "comment" : "Status bar menu item that quits the app.",
       "extractionState" : "stale",

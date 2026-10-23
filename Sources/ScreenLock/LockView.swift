@@ -43,10 +43,16 @@ struct LockView: View {
                 .font(.system(size: 15))
                 .foregroundStyle(.white.opacity(0.75))
 
-                Text("Press ⌃⌥⌘L to try again", comment: "Hint on the lock screen explaining how to show the authentication prompt again.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.4))
-                    .padding(.top, 8)
+                Group {
+                    if coordinator.phase == .idle {
+                        Text("Press ⌃⌥⌘L to unlock", comment: "Hint on the lock screen explaining how to bring up the authentication prompt.")
+                    } else {
+                        Text("Press ⌃⌥⌘L to try again", comment: "Hint on the lock screen explaining how to show the authentication prompt again.")
+                    }
+                }
+                .font(.system(size: 12))
+                .foregroundStyle(.white.opacity(0.4))
+                .padding(.top, 8)
             }
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)

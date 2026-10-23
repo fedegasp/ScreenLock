@@ -183,14 +183,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         isLocked = true
 
+        // The authentication prompt is not shown automatically: the screen stays
+        // black until the user asks for it with ⌃⌥⌘L, so locking never steals the
+        // keyboard or pops a Touch ID panel while walking away.
+        coordinator.phase = .idle
         systemLockMonitor.arm()
         powerAssertion.acquire()
         lockWindowController.show()
         reassertLock()
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 0.3) { [weak self] in
-            self?.retryAuthentication()
-        }
     }
 
     @objc private func appDidResignActive() {

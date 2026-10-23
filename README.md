@@ -13,8 +13,9 @@ The app is localized in English (default) and Italian.
 - **Left-click** the padlock icon in the menu bar → locks the screen immediately.
 - **Right-click** the icon → menu with "Lock Now" / "Show Menu Bar Icon" / "Quit".
 - **Global shortcut `⌃⌥⌘L`** (Control+Option+Command+L) → locks, or, if already
-  locked, **shows the authentication prompt again** (useful if the first attempt was
-  cancelled or failed).
+  locked, **shows the authentication prompt** (the prompt is never shown on its own:
+  the same shortcut brings it up the first time and after a cancelled or failed
+  attempt).
 
 ### Hiding the menu bar icon
 
@@ -36,10 +37,11 @@ When it locks:
    sleep-prevention assertions. These only block *idle* sleep: closing the laptop
    lid still puts the Mac to sleep (see
    [Known limitations](#known-limitations--possible-future-extensions)).
-4. The Touch ID prompt starts automatically (or the password prompt, if Touch ID is
-   not available — see below). On success, everything is restored and the window
-   closes. If it fails or is cancelled, the screen stays locked: you can retry with
-   `⌃⌥⌘L`.
+4. **No authentication prompt is shown yet**: the lock screen just sits there until
+   you ask for it with `⌃⌥⌘L`, which starts the Touch ID prompt (or the password
+   prompt, if Touch ID is not available — see below). On success, everything is
+   restored and the window closes. If it fails or is cancelled, the screen stays
+   locked: press `⌃⌥⌘L` again to retry.
 5. If another process still manages to activate itself (e.g. `tell application "X" to
    activate` via AppleScript/automation), macOS automatically reverts the
    `presentationOptions` because we are no longer the active app. The app notices
