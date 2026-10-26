@@ -37,6 +37,18 @@
         }
       }
     },
+    "Black Background" : {
+      "comment" : "Status bar menu option: the lock screen is filled with solid black.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sfondo nero"
+          }
+        }
+      }
+    },
     "Cancel" : {
       "comment" : "Cancel button title of the Touch ID/password prompt.",
       "extractionState" : "stale",
@@ -45,6 +57,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Annulla"
+          }
+        }
+      }
+    },
+    "Glass Background" : {
+      "comment" : "Status bar menu option: the lock screen is a frosted/blurred translucent background.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sfondo glass"
           }
         }
       }
@@ -137,6 +161,18 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Impossibile attivare il blocco: né Touch ID né la password di login possono essere verificati su questo Mac (o in questa sessione). Per evitare di restare bloccati, il lock non verrà attivato."
+          }
+        }
+      }
+    },
+    "Transparent Background" : {
+      "comment" : "Status bar menu option: the lock screen has no background, the desktop stays visible behind it.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Sfondo trasparente"
           }
         }
       }

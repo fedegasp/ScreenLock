@@ -42,6 +42,7 @@ final class GlobalHotKey {
                 )
                 let instance = Unmanaged<GlobalHotKey>.fromOpaque(userData).takeUnretainedValue()
                 if hotKeyID.id == instance.hotKeyID.id {
+                    Log.hotkey.debug("Hotkey pressed")
                     instance.callback()
                 }
                 return noErr
@@ -52,7 +53,10 @@ final class GlobalHotKey {
             &eventHandlerRef
         )
 
-        guard installStatus == noErr else { return nil }
+        guard installStatus == noErr else {
+            Log.hotkey.error("InstallEventHandler failed: status \(describe(status: installStatus))")
+            return nil
+        }
 
         let registerStatus = RegisterEventHotKey(
             keyCode,
@@ -64,12 +68,18 @@ final class GlobalHotKey {
         )
 
         guard registerStatus == noErr else {
+            // -9878 (eventHotKeyExistsErr) means another process already owns the
+            // combination: the shortcut will simply never fire for us.
+            Log.hotkey.error("RegisterEventHotKey failed for keyCode \(keyCode) modifiers \(modifiers): status \(describe(status: registerStatus))")
             if let eventHandlerRef { RemoveEventHandler(eventHandlerRef) }
             return nil
         }
+
+        Log.hotkey.notice("Global hotkey registered (keyCode \(keyCode), modifiers \(modifiers))")
     }
 
     deinit {
+        Log.hotkey.notice("Unregistering global hotkey")
         if let hotKeyRef { UnregisterEventHotKey(hotKeyRef) }
         if let eventHandlerRef { RemoveEventHandler(eventHandlerRef) }
     }

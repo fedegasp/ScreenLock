@@ -5,6 +5,7 @@
 //  Created by Federico Gasperini on 22/10/26.
 //
 
+import AppKit
 import SwiftUI
 
 struct LockView: View {
@@ -13,7 +14,7 @@ struct LockView: View {
 
     var body: some View {
         ZStack {
-            Color.black.ignoresSafeArea()
+            background.ignoresSafeArea()
 
             VStack(spacing: 20) {
                 Image(systemName: "lock.fill")
@@ -54,6 +55,9 @@ struct LockView: View {
                 .foregroundStyle(.white.opacity(0.4))
                 .padding(.top, 8)
             }
+            // Without a solid black fill the text sits on the desktop: a drop
+            // shadow keeps it readable over any wallpaper.
+            .shadow(color: .black.opacity(preferences.backgroundStyle == .black ? 0 : 0.8), radius: 6)
         }
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .bottomLeading) {
@@ -68,4 +72,29 @@ struct LockView: View {
             .padding(24)
         }
     }
+
+    @ViewBuilder
+    private var background: some View {
+        switch preferences.backgroundStyle {
+        case .black:
+            Color.black
+        case .glass:
+            GlassBackground()
+        case .transparent:
+            Color.clear
+        }
+    }
+}
+
+/// Frosted blur of whatever the lock window covers.
+private struct GlassBackground: NSViewRepresentable {
+    func makeNSView(context: Context) -> NSVisualEffectView {
+        let view = NSVisualEffectView()
+        view.material = .fullScreenUI
+        view.blendingMode = .behindWindow
+        view.state = .active
+        return view
+    }
+
+    func updateNSView(_ nsView: NSVisualEffectView, context: Context) {}
 }

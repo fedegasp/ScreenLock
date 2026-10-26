@@ -11,7 +11,8 @@ The app is localized in English (default) and Italian.
 ## How to trigger it
 
 - **Left-click** the padlock icon in the menu bar → locks the screen immediately.
-- **Right-click** the icon → menu with "Lock Now" / "Show Menu Bar Icon" / "Quit".
+- **Right-click** the icon → menu with "Lock Now" / "Show Menu Bar Icon" / the three
+  background styles / "Quit".
 - **Global shortcut `⌃⌥⌘L`** (Control+Option+Command+L) → locks, or, if already
   locked, **shows the authentication prompt** (the prompt is never shown on its own:
   the same shortcut brings it up the first time and after a cancelled or failed
@@ -25,8 +26,17 @@ back, lock with `⌃⌥⌘L` and turn on the **"Show menu bar icon"** switch in 
 bottom-left corner of the lock screen. While the icon is hidden there is no "Quit"
 menu: turn the icon back on first, or `killall ScreenLock`.
 
+### Background style
+
+The menu bar menu offers three looks for the lock screen (persisted in
+`UserDefaults`, black by default): **"Black Background"** (solid black),
+**"Glass Background"** (frosted blur of what is behind) and **"Transparent
+Background"** (no background at all, the desktop stays visible). Only the looks
+change: in every style the window still covers each display and swallows input.
+
 When it locks:
-1. A black full-screen window is created for **every connected display**.
+1. A full-screen window is created for **every connected display**, with the
+   background style chosen in the menu.
 2. `NSApp.presentationOptions` is set to disable Cmd+Tab, Force Quit
    (Cmd+Opt+Esc), shut down/restart/log out, Cmd+H, and to hide the Dock and menu bar.
 3. A **power assertion** (IOKit) is acquired that prevents system and display sleep,
@@ -139,6 +149,8 @@ Sources/ScreenLock/
   PowerAssertion.swift              # IOKit, keeps the Mac awake
   SystemLockMonitor.swift           # releases the lock after a macOS lock screen unlock
   GlobalHotKey.swift                # Carbon Hot Key Manager (no permissions required)
+  Log.swift                         # logging: unified system log + ~/Library/Logs file
+  CrashReporter.swift               # records abnormal terminations in the same log
   KeyableWindow.swift               # borderless NSWindow that can become the key window
   Localizable.xcstrings             # String Catalog: English (source) and Italian
 ```
@@ -168,6 +180,90 @@ For development: `make generate && open ScreenLock.xcworkspace`, then the
 
 `make install` refuses to proceed if ScreenLock is running: quit it first
 (right-click the icon → "Quit").
+
+## Logs
+
+The app logs its whole flow — lock, unlock, authentication outcome, focus
+re-assertions, every failing system call — to **two** sinks at once, defined in
+[Log.swift](Sources/ScreenLock/Log.swift) and split into the categories `app`,
+`lock`, `auth`, `window`, `hotkey`, `power`, `systemLock`, `preferences`.
+
+### A plain file (no privileges needed)
+
+```bash
+tail -f ~/Library/Logs/ScreenLock/ScreenLock.log
+```
+
+Each line is `timestamp [category] LEVEL message`. The file rotates to a single
+`ScreenLock.log.1` backup at 1 MB, so it cannot grow without bound. Its path is also
+printed in the first lines at every launch.
+
+This is the sink to use on a **standard (non-administrator) account**, where the
+macOS unified log below is simply not readable.
+
+### The macOS unified log
+
+Same messages, under the subsystem `com.fgasperini.screenlock`:
+
+```bash
+log stream --predicate 'subsystem == "com.fgasperini.screenlock"' --level debug
+log show --predicate 'subsystem == "com.fgasperini.screenlock"' --last 1h --info --debug
+```
+
+⚠️ **Both commands, and Console.app, require an administrator account**: on a
+standard account they fail with `Must be admin to run 'stream' command` and
+`Could not open local log store: Operation not permitted`. Use the file above
+instead, or prefix the commands with `sudo`. In Console.app, enable Action →
+"Include Info Messages" and "Include Debug Messages", then filter by the subsystem.
+
+Running the app straight from Xcode (▶︎) also shows everything in the debug console,
+with no privileges involved.
+
+### Crashes
+
+A crash does **not** go through the normal logging path, so
+[CrashReporter.swift](Sources/ScreenLock/CrashReporter.swift) installs an uncaught
+exception handler and handlers for `SIGABRT`, `SIGBUS`, `SIGFPE`, `SIGILL`,
+`SIGSEGV`, `SIGSYS`, `SIGTRAP` and `SIGTERM`. The last line of the log then says
+how the app died:
+
+```
+=== ScreenLock terminated by SIGSEGV (segmentation fault) at epoch 1793033623, see ~/Library/Logs/DiagnosticReports ===
+```
+
+(`date -r 1793033623` turns that into a readable date; the signal handler may only
+use async-signal-safe calls, so it cannot format one itself.)
+
+A normal quit instead ends with `=== ScreenLock exited cleanly ===`. That is the
+point of the two markers: a log that simply stops, with neither line, means the
+process was destroyed without warning — `kill -9`, Force Quit from another account,
+or a panic. `SIGKILL` cannot be caught by any process.
+
+Because file writes are synchronous (`write(2)` on a descriptor opened with
+`O_APPEND`, not a buffered or queued writer), the lines right before a crash are
+really on disk.
+
+The handler then re-raises the signal with the default action, so **macOS still
+produces its own full crash report**, with the complete stack trace:
+
+```bash
+ls -t ~/Library/Logs/DiagnosticReports/ | grep ScreenLock
+```
+
+Those `.ips` files need no administrator rights either, and Console.app shows them
+under "Crash Reports". The app's own marker adds what the `.ips` cannot tell you:
+whether the crash happened **while the screen was locked** — which matters, since a
+crash while locked releases the lock and leaves the session open.
+
+### Levels
+
+`NOTICE` covers the normal flow (launch, lock, unlock, authentication outcome,
+system lock screen); `DEBUG` adds the details (each window created, focus
+re-assertions, the idle-timer heartbeat); `ERROR` is reserved for the things that
+actually break the lock — the hotkey failing to register, `presentationOptions`
+that macOS did not apply, power assertions that were refused, no authentication
+method available. All values are logged in clear, so nothing shows up as
+`<private>`: no password and no screen content is ever logged.
 
 ## Known limitations / possible future extensions
 

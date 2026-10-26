@@ -55,26 +55,43 @@ final class SystemLockMonitor {
     func arm() {
         isArmed = true
         sawSystemLock = false
+        Log.systemLock.debug("Armed (session screen locked: \(Self.isSessionScreenLocked))")
     }
 
     func disarm() {
         isArmed = false
         sawSystemLock = false
+        Log.systemLock.debug("Disarmed")
     }
 
     @objc private func systemDidLock() {
-        guard isArmed, Self.isSessionScreenLocked else { return }
+        let sessionIsLocked = Self.isSessionScreenLocked
+        guard isArmed, sessionIsLocked else {
+            // Either we are not locked (nothing to do) or the notification does not
+            // match the real session state, i.e. some other process posted it.
+            Log.systemLock.debug("screenIsLocked ignored (armed: \(self.isArmed), session locked: \(sessionIsLocked))")
+            return
+        }
         sawSystemLock = true
+        Log.systemLock.notice("macOS lock screen appeared while ScreenLock was engaged")
     }
 
     @objc private func systemDidUnlock() {
-        guard isArmed, sawSystemLock, !Self.isSessionScreenLocked else { return }
+        let sessionIsLocked = Self.isSessionScreenLocked
+        guard isArmed, sawSystemLock, !sessionIsLocked else {
+            Log.systemLock.debug("screenIsUnlocked ignored (armed: \(self.isArmed), saw system lock: \(self.sawSystemLock), session locked: \(sessionIsLocked))")
+            return
+        }
         sawSystemLock = false
+        Log.systemLock.notice("macOS lock screen released: unlocking ScreenLock without a second authentication")
         onSystemUnlocked?()
     }
 
     private static var isSessionScreenLocked: Bool {
-        guard let info = CGSessionCopyCurrentDictionary() as? [String: Any] else { return false }
+        guard let info = CGSessionCopyCurrentDictionary() as? [String: Any] else {
+            Log.systemLock.error("CGSessionCopyCurrentDictionary() returned nothing: session state unknown, assuming unlocked")
+            return false
+        }
         return info["CGSSessionScreenIsLocked"] as? Bool ?? false
     }
 }

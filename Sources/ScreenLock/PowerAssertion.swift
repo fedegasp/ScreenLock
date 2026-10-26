@@ -22,22 +22,37 @@ final class PowerAssertion {
     private let reason = "ScreenLock active" as CFString
 
     func acquire() {
-        guard !isActive else { return }
+        guard !isActive else {
+            Log.power.debug("acquire() ignored: assertions already held")
+            return
+        }
         isActive = true
 
-        IOPMAssertionCreateWithName(
+        let systemStatus = IOPMAssertionCreateWithName(
             kIOPMAssertionTypePreventUserIdleSystemSleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
             reason,
             &systemAssertionID
         )
+        if systemStatus == kIOReturnSuccess {
+            Log.power.debug("PreventUserIdleSystemSleep assertion acquired (id \(self.systemAssertionID))")
+        } else {
+            // The Mac can still fall asleep under us: expect the lock to vanish
+            // behind the system login window after the idle timeout.
+            Log.power.error("PreventUserIdleSystemSleep assertion failed: \(describe(status: systemStatus))")
+        }
 
-        IOPMAssertionCreateWithName(
+        let displayStatus = IOPMAssertionCreateWithName(
             kIOPMAssertionTypePreventUserIdleDisplaySleep as CFString,
             IOPMAssertionLevel(kIOPMAssertionLevelOn),
             reason,
             &displayAssertionID
         )
+        if displayStatus == kIOReturnSuccess {
+            Log.power.debug("PreventUserIdleDisplaySleep assertion acquired (id \(self.displayAssertionID))")
+        } else {
+            Log.power.error("PreventUserIdleDisplaySleep assertion failed: \(describe(status: displayStatus))")
+        }
 
         declareUserActivity()
 
@@ -46,20 +61,39 @@ final class PowerAssertion {
         }
         RunLoop.main.add(timer, forMode: .common)
         heartbeat = timer
+        Log.power.notice("Power assertions active, idle-timer heartbeat every 20s")
     }
 
     private func declareUserActivity() {
-        IOPMAssertionDeclareUserActivity(reason, kIOPMUserActiveLocal, &userActivityAssertionID)
+        let status = IOPMAssertionDeclareUserActivity(reason, kIOPMUserActiveLocal, &userActivityAssertionID)
+        if status == kIOReturnSuccess {
+            Log.power.debug("User activity declared (idle timer reset)")
+        } else {
+            // Without this the real macOS lock screen appears behind our window.
+            Log.power.error("IOPMAssertionDeclareUserActivity failed: \(describe(status: status))")
+        }
     }
 
     func release() {
-        guard isActive else { return }
+        guard isActive else {
+            Log.power.debug("release() ignored: no assertions held")
+            return
+        }
         isActive = false
 
         heartbeat?.invalidate()
         heartbeat = nil
 
-        IOPMAssertionRelease(systemAssertionID)
-        IOPMAssertionRelease(displayAssertionID)
+        let systemStatus = IOPMAssertionRelease(systemAssertionID)
+        if systemStatus != kIOReturnSuccess {
+            Log.power.error("Releasing the system-sleep assertion failed: \(describe(status: systemStatus))")
+        }
+
+        let displayStatus = IOPMAssertionRelease(displayAssertionID)
+        if displayStatus != kIOReturnSuccess {
+            Log.power.error("Releasing the display-sleep assertion failed: \(describe(status: displayStatus))")
+        }
+
+        Log.power.notice("Power assertions released")
     }
 }

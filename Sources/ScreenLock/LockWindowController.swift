@@ -23,18 +23,30 @@ final class LockWindowController {
     var isShowing: Bool { !windows.isEmpty }
 
     func show() {
-        guard windows.isEmpty else { return }
+        guard windows.isEmpty else {
+            Log.window.debug("show() ignored: \(self.windows.count) window(s) already on screen")
+            return
+        }
 
-        windows = NSScreen.screens.map { screen in
+        let screens = NSScreen.screens
+        if screens.isEmpty {
+            // Nothing would cover the display: the lock would engage invisibly.
+            Log.window.error("NSScreen.screens is empty: no lock window will be created")
+        }
+
+        windows = screens.map { screen in
             makeWindow(for: screen)
         }
 
         windows.forEach { $0.orderFrontRegardless() }
         windows.first?.makeKeyAndOrderFront(nil)
+
+        Log.window.notice("\(self.windows.count) lock window(s) shown; key window: \(self.windows.first?.isKeyWindow ?? false)")
     }
 
     func rebuildForCurrentScreens() {
         guard !windows.isEmpty else { return }
+        Log.window.notice("Display configuration changed: rebuilding the lock windows")
         hide()
         show()
     }
@@ -43,9 +55,11 @@ final class LockWindowController {
     func bringToFront() {
         windows.forEach { $0.orderFrontRegardless() }
         windows.first?.makeKeyAndOrderFront(nil)
+        Log.window.debug("Brought to front; key window: \(self.windows.first?.isKeyWindow ?? false)")
     }
 
     func hide() {
+        Log.window.notice("Hiding \(self.windows.count) lock window(s)")
         windows.forEach { $0.orderOut(nil) }
         windows.removeAll()
     }
@@ -59,8 +73,10 @@ final class LockWindowController {
             screen: screen
         )
 
-        window.isOpaque = true
-        window.backgroundColor = .black
+        // The background is drawn by `LockView` (black, glass or nothing at all), so
+        // the window itself stays clear and the style can change while locked.
+        window.isOpaque = false
+        window.backgroundColor = .clear
         window.level = .screenSaver
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         window.isMovable = false
@@ -71,6 +87,9 @@ final class LockWindowController {
         let hostingView = NSHostingView(rootView: LockView(coordinator: coordinator, preferences: preferences))
         hostingView.frame = window.contentRect(forFrameRect: window.frame)
         window.contentView = hostingView
+
+        let frame = screen.frame
+        Log.window.debug("Window created for screen \(Int(frame.width))x\(Int(frame.height)) at (\(Int(frame.origin.x)), \(Int(frame.origin.y))), style \(preferences.backgroundStyle.rawValue)")
 
         return window
     }
