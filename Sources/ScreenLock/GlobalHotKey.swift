@@ -5,8 +5,8 @@
 //  Created by Federico Gasperini on 22/10/26.
 //
 
-import Carbon.HIToolbox
 import AppKit
+import Carbon.HIToolbox
 
 /// Registers a single systemwide keyboard shortcut using the (permission-free)
 /// Carbon Hot Key Manager, so no Accessibility/Input Monitoring grant is needed.
@@ -14,7 +14,7 @@ final class GlobalHotKey {
     private var hotKeyRef: EventHotKeyRef?
     private var eventHandlerRef: EventHandlerRef?
     private let callback: () -> Void
-    private let hotKeyID = EventHotKeyID(signature: OSType(0x534C_4B31), id: 1) // 'SLK1'
+    private let hotKeyID = EventHotKeyID(signature: OSType(0x534C_4B31), id: 1)  // 'SLK1'
 
     init?(keyCode: UInt32, modifiers: UInt32, callback: @escaping () -> Void) {
         self.callback = callback
@@ -70,7 +70,9 @@ final class GlobalHotKey {
         guard registerStatus == noErr else {
             // -9878 (eventHotKeyExistsErr) means another process already owns the
             // combination: the shortcut will simply never fire for us.
-            Log.hotkey.error("RegisterEventHotKey failed for keyCode \(keyCode) modifiers \(modifiers): status \(describe(status: registerStatus))")
+            Log.hotkey.error(
+                "RegisterEventHotKey failed for keyCode \(keyCode) modifiers \(modifiers): status \(describe(status: registerStatus))"
+            )
             if let eventHandlerRef { RemoveEventHandler(eventHandlerRef) }
             return nil
         }

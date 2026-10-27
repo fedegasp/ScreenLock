@@ -16,9 +16,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
     private let preferences = Preferences()
     private let coordinator = LockCoordinator()
-    private lazy var lockWindowController = LockWindowController(coordinator: coordinator, preferences: preferences)
+    private lazy var lockWindowController = LockWindowController(
+        coordinator: coordinator, preferences: preferences)
     private let authenticator = TouchIDAuthenticator()
-    private let powerAssertion = PowerAssertion()
+    private let keepAwake = KeepAwake()
     private let systemLockMonitor = SystemLockMonitor()
 
     private var isLocked = false
@@ -32,14 +33,25 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Log.start()
         CrashReporter.install()
 
-        let version = Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
+        let version =
+            Bundle.main.object(forInfoDictionaryKey: "CFBundleShortVersionString") as? String ?? "?"
         let build = Bundle.main.object(forInfoDictionaryKey: "CFBundleVersion") as? String ?? "?"
-        Log.app.notice("ScreenLock \(version) (\(build)) launched, \(NSScreen.screens.count) screen(s)")
+        Log.app.notice(
+            "ScreenLock \(version) (\(build)) launched, \(NSScreen.screens.count) screen(s)")
         Log.app.notice("Readable log file: \(Log.fileURL?.path ?? "unavailable")")
 
         NSApp.setActivationPolicy(.accessory)
         setupStatusItem()
         setupGlobalHotKey()
+
+        // Picking another keep-awake mode from the menu while the screen is
+        // already locked swaps the mechanism in place (no-op when unlocked).
+        preferences.$keepAwakeMode
+            .dropFirst()  // the stored value is read by lockScreen() itself
+            .sink { [weak self] mode in
+                self?.keepAwake.setMode(mode)
+            }
+            .store(in: &cancellables)
 
         // If macOS's own lock screen appears while we're locked (lid closed, sleep,
         // ⌃⌘Q) the user already authenticates there: don't ask a second time.
@@ -98,7 +110,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             Log.app.error("The status item has no button: the menu bar icon will not respond")
         }
         if let button = statusItem.button {
-            button.image = NSImage(systemSymbolName: "lock.fill", accessibilityDescription: "ScreenLock")
+            button.image = NSImage(
+                systemSymbolName: "lock.fill", accessibilityDescription: "ScreenLock")
             button.action = #selector(statusItemClicked)
             button.target = self
             button.sendAction(on: [.leftMouseUp, .rightMouseUp])
@@ -119,7 +132,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         if event.type == .rightMouseUp {
             showMenu()
-        } else {
+        }
+        else {
             handleHotKeyTriggered()
         }
     }
@@ -127,14 +141,22 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     private func showMenu() {
         let menu = NSMenu()
         menu.addItem(
-            withTitle: String(localized: "Lock Now (⌃⌥⌘L)", comment: "Status bar menu item that locks the screen; the shortcut in parentheses is the global hotkey."),
+            withTitle: String(
+                localized: "Lock Now (⌃⌥⌘L)",
+                comment:
+                    "Status bar menu item that locks the screen; the shortcut in parentheses is the global hotkey."
+            ),
             action: #selector(lockFromMenu),
             keyEquivalent: ""
         ).target = self
         menu.addItem(.separator())
 
         let showIconItem = NSMenuItem(
-            title: String(localized: "Show Menu Bar Icon", comment: "Status bar menu toggle; when off the menu bar icon is hidden and the app stays reachable through the global hotkey."),
+            title: String(
+                localized: "Show Menu Bar Icon",
+                comment:
+                    "Status bar menu toggle; when off the menu bar icon is hidden and the app stays reachable through the global hotkey."
+            ),
             action: #selector(toggleStatusItemVisibility),
             keyEquivalent: ""
         )
@@ -156,6 +178,31 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
         menu.addItem(.separator())
 
+        let keepAwakeItem = NSMenuItem(
+            title: String(
+                localized: "Keep Mac Awake",
+                comment:
+                    "Status bar submenu listing how the Mac is kept awake while the screen is locked."
+            ),
+            action: nil,
+            keyEquivalent: ""
+        )
+        let keepAwakeMenu = NSMenu()
+        for mode in KeepAwakeMode.allCases {
+            let item = NSMenuItem(
+                title: mode.menuTitle,
+                action: #selector(selectKeepAwakeMode(_:)),
+                keyEquivalent: ""
+            )
+            item.target = self
+            item.representedObject = mode
+            item.state = preferences.keepAwakeMode == mode ? .on : .off
+            keepAwakeMenu.addItem(item)
+        }
+        keepAwakeItem.submenu = keepAwakeMenu
+        menu.addItem(keepAwakeItem)
+        menu.addItem(.separator())
+
         let quitItem = NSMenuItem(
             title: String(localized: "Quit", comment: "Status bar menu item that quits the app."),
             action: #selector(quit),
@@ -167,7 +214,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         statusItem.menu = menu
         statusItem.button?.performClick(nil)
-        statusItem.menu = nil // one-shot menu; left-click keeps locking directly
+        statusItem.menu = nil  // one-shot menu; left-click keeps locking directly
     }
 
     @objc private func lockFromMenu() {
@@ -182,6 +229,17 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
     @objc private func selectBackgroundStyle(_ sender: NSMenuItem) {
         guard let style = sender.representedObject as? LockBackgroundStyle else { return }
         preferences.backgroundStyle = style
+    }
+
+    @objc private func selectKeepAwakeMode(_ sender: NSMenuItem) {
+        guard let mode = sender.representedObject as? KeepAwakeMode else { return }
+        preferences.keepAwakeMode = mode
+        if mode == .hid {
+            // Synthetic mouse events go nowhere until ScreenLock is trusted for
+            // Accessibility: ask now, while the user is right here, rather than
+            // discovering it at the next lock (where we fall back to IOKit).
+            keepAwake.requestHIDPermissionIfNeeded()
+        }
     }
 
     @objc private func quit() {
@@ -240,7 +298,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // keyboard or pops a Touch ID panel while walking away.
         coordinator.phase = .idle
         systemLockMonitor.arm()
-        powerAssertion.acquire()
+        keepAwake.acquire(mode: preferences.keepAwakeMode)
         lockWindowController.show()
         reassertLock()
         Log.lock.notice("Locked")
@@ -279,7 +337,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             .disableHideApplication,
             .disableAppleMenu,
             .hideDock,
-            .hideMenuBar
+            .hideMenuBar,
         ]
         NSApp.presentationOptions = options
         lockWindowController.bringToFront()
@@ -303,7 +361,7 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         authenticator.cancelPendingAuthentications()
         NSApp.presentationOptions = []
         lockWindowController.hide()
-        powerAssertion.release()
+        keepAwake.release()
         coordinator.phase = .idle
         Log.lock.notice("Unlocked")
     }

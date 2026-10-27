@@ -28,11 +28,38 @@ enum LockBackgroundStyle: String, CaseIterable {
     }
 }
 
+/// How the Mac is kept awake while the lock screen is shown: with IOKit power
+/// assertions (nothing moves on screen) or by nudging the mouse pointer, which
+/// produces real HID events and so also keeps alive anything else that watches
+/// for user input (presence/idle detection in other apps).
+enum KeepAwakeMode: String, CaseIterable {
+    case ioKit = "iokit"
+    case hid
+
+    /// Title of the matching item in the status bar menu.
+    var menuTitle: String {
+        switch self {
+        case .ioKit:
+            String(
+                localized: "Power Assertions (IOKit)",
+                comment:
+                    "Status bar menu option: the Mac is kept awake with IOKit power assertions.")
+        case .hid:
+            String(
+                localized: "Mouse Jiggle (HID)",
+                comment:
+                    "Status bar menu option: the Mac is kept awake by moving the mouse pointer, which generates real input events."
+            )
+        }
+    }
+}
+
 /// User preferences persisted in `UserDefaults`, shared by the status menu and the lock screen.
 final class Preferences: ObservableObject {
     private enum Key {
         static let showsStatusItem = "showsStatusItem"
         static let backgroundStyle = "backgroundStyle"
+        static let keepAwakeMode = "keepAwakeMode"
     }
 
     private let defaults: UserDefaults
@@ -54,11 +81,20 @@ final class Preferences: ObservableObject {
         }
     }
 
+    /// Mechanism used to keep the Mac awake while locked; chosen from the status bar menu.
+    @Published var keepAwakeMode: KeepAwakeMode {
+        didSet {
+            defaults.set(keepAwakeMode.rawValue, forKey: Key.keepAwakeMode)
+            Log.preferences.notice("keepAwakeMode = \(self.keepAwakeMode.rawValue)")
+        }
+    }
+
     init(defaults: UserDefaults = .standard) {
         self.defaults = defaults
         defaults.register(defaults: [
             Key.showsStatusItem: true,
-            Key.backgroundStyle: LockBackgroundStyle.black.rawValue
+            Key.backgroundStyle: LockBackgroundStyle.black.rawValue,
+            Key.keepAwakeMode: KeepAwakeMode.ioKit.rawValue,
         ])
         showsStatusItem = defaults.bool(forKey: Key.showsStatusItem)
 
@@ -68,6 +104,13 @@ final class Preferences: ObservableObject {
         }
         backgroundStyle = storedStyle.flatMap(LockBackgroundStyle.init(rawValue:)) ?? .black
 
-        Log.preferences.debug("Loaded: showsStatusItem = \(self.showsStatusItem), backgroundStyle = \(self.backgroundStyle.rawValue)")
+        let storedMode = defaults.string(forKey: Key.keepAwakeMode)
+        if let storedMode, KeepAwakeMode(rawValue: storedMode) == nil {
+            Log.preferences.error(
+                "Unknown stored keepAwakeMode '\(storedMode)': falling back to IOKit")
+        }
+        keepAwakeMode = storedMode.flatMap(KeepAwakeMode.init(rawValue:)) ?? .ioKit
+
+        Log.preferences.debug("Loaded: showsStatusItem = \(self.showsStatusItem), backgroundStyle = \(self.backgroundStyle.rawValue), keepAwakeMode = \(self.keepAwakeMode.rawValue)")
     }
 }

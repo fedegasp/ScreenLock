@@ -12,7 +12,7 @@ The app is localized in English (default) and Italian.
 
 - **Left-click** the padlock icon in the menu bar → locks the screen immediately.
 - **Right-click** the icon → menu with "Lock Now" / "Show Menu Bar Icon" / the three
-  background styles / "Quit".
+  background styles / "Keep Mac Awake" / "Quit".
 - **Global shortcut `⌃⌥⌘L`** (Control+Option+Command+L) → locks, or, if already
   locked, **shows the authentication prompt** (the prompt is never shown on its own:
   the same shortcut brings it up the first time and after a cancelled or failed
@@ -34,17 +34,45 @@ The menu bar menu offers three looks for the lock screen (persisted in
 Background"** (no background at all, the desktop stays visible). Only the looks
 change: in every style the window still covers each display and swallows input.
 
+### Keeping the Mac awake
+
+The **"Keep Mac Awake"** submenu picks *how* the Mac is kept awake while the screen
+is locked (persisted in `UserDefaults`, IOKit by default):
+
+- **"Power Assertions (IOKit)"** (default) — `PreventUserIdleSystemSleep` +
+  `PreventUserIdleDisplaySleep` and an `IOPMAssertionDeclareUserActivity` heartbeat
+  every 20s, see [PowerAssertion.swift](Sources/ScreenLock/PowerAssertion.swift).
+  Nothing moves on screen and no permission is needed.
+- **"Mouse Jiggle (HID)"** — the pointer is nudged one point sideways and straight
+  back every 20s ([MouseJiggler.swift](Sources/ScreenLock/MouseJiggler.swift)). These
+  are **real HID events**, so besides resetting macOS's idle timer they also look
+  like genuine user input to everything else that watches for it (the presence /
+  "away" detection of chat and meeting apps, for instance), which the IOKit
+  assertions do not. The price is a permission: macOS only delivers synthetic events
+  from a process trusted for **Accessibility** (System Settings → Privacy & Security
+  → Accessibility), so picking this mode asks for it right away; grant it and
+  relaunch the app if the dialog's switch does not take effect immediately. Until it
+  is granted `CGEvent.post` succeeds and does nothing, so the app logs an `ERROR` and
+  **falls back to the IOKit assertions** for that lock rather than letting the Mac
+  fall asleep.
+
+Switching mode while the screen is already locked swaps the mechanism in place; the
+choice is otherwise read when the lock engages
+([KeepAwake.swift](Sources/ScreenLock/KeepAwake.swift)).
+
 When it locks:
 1. A full-screen window is created for **every connected display**, with the
    background style chosen in the menu.
 2. `NSApp.presentationOptions` is set to disable Cmd+Tab, Force Quit
    (Cmd+Opt+Esc), shut down/restart/log out, Cmd+H, and to hide the Dock and menu bar.
-3. A **power assertion** (IOKit) is acquired that prevents system and display sleep,
-   plus a "heartbeat" every 20s (`IOPMAssertionDeclareUserActivity`, the same
-   technique used by Caffeine/Amphetamine) that resets macOS's real idle timer:
-   without it, the *system* screen saver/lock screen would still kick in behind the
-   lock window after a few minutes, because it is a timer independent of the
-   sleep-prevention assertions. These only block *idle* sleep: closing the laptop
+3. The Mac is kept awake with the mechanism chosen in the menu (see
+   ["Keeping the Mac awake"](#keeping-the-mac-awake)). In the default IOKit mode that
+   is a **power assertion** preventing system and display sleep, plus a "heartbeat"
+   every 20s (`IOPMAssertionDeclareUserActivity`, the same technique used by
+   Caffeine/Amphetamine) that resets macOS's real idle timer: without it, the *system*
+   screen saver/lock screen would still kick in behind the lock window after a few
+   minutes, because it is a timer independent of the sleep-prevention assertions.
+   These only block *idle* sleep: closing the laptop
    lid still puts the Mac to sleep (see
    [Known limitations](#known-limitations--possible-future-extensions)).
 4. **No authentication prompt is shown yet**: the lock screen just sits there until
@@ -144,9 +172,11 @@ Sources/ScreenLock/
   LockWindowController.swift        # 1 borderless NSWindow per screen, .screenSaver level
   LockView.swift                    # SwiftUI content of the lock screen
   LockCoordinator.swift             # observable state (idle/authenticating/failed)
-  Preferences.swift                 # persisted user preferences (menu bar icon visibility)
+  Preferences.swift                 # persisted user preferences (menu bar icon, background, keep-awake mode)
   TouchIDAuthenticator.swift        # LocalAuthentication: Touch ID, password only without Touch ID
-  PowerAssertion.swift              # IOKit, keeps the Mac awake
+  KeepAwake.swift                   # picks the keep-awake strategy and switches it live
+  PowerAssertion.swift              # IOKit assertions, keeps the Mac awake (default)
+  MouseJiggler.swift                # synthetic mouse nudges (HID), needs Accessibility
   SystemLockMonitor.swift           # releases the lock after a macOS lock screen unlock
   GlobalHotKey.swift                # Carbon Hot Key Manager (no permissions required)
   Log.swift                         # logging: unified system log + ~/Library/Logs file
@@ -277,6 +307,11 @@ method available. All values are logged in clear, so nothing shows up as
   privileged root helper. On wake, the system login screen appears (if "Require
   password after sleep" is enabled); unlocking it also releases ScreenLock (see
   step 6 above).
+- In **"Mouse Jiggle (HID)"** mode no IOKit assertion is held at all: the Mac stays
+  awake only because the idle timer is reset every 20s, which also means the pointer
+  really does move (one point out and back) every 20s, and that an energy setting
+  with a sleep delay shorter than the heartbeat would win. Closing the lid still puts
+  the Mac to sleep in this mode too.
 - The system lock/unlock notifications are undocumented (though long-standing and
   widely used); if a future macOS stops posting them, ScreenLock simply falls back
   to asking for its own authentication after the system unlock.

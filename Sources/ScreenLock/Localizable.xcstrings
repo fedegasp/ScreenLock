@@ -73,6 +73,18 @@
         }
       }
     },
+    "Keep Mac Awake" : {
+      "comment" : "Status bar submenu listing how the Mac is kept awake while the screen is locked.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Tieni il Mac attivo"
+          }
+        }
+      }
+    },
     "Lock Now (⌃⌥⌘L)" : {
       "comment" : "Status bar menu item that locks the screen; the shortcut in parentheses is the global hotkey.",
       "extractionState" : "stale",
@@ -81,6 +93,30 @@
           "stringUnit" : {
             "state" : "translated",
             "value" : "Blocca ora (⌃⌥⌘L)"
+          }
+        }
+      }
+    },
+    "Mouse Jiggle (HID)" : {
+      "comment" : "Status bar menu option: the Mac is kept awake by moving the mouse pointer, which generates real input events.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Movimento del mouse (HID)"
+          }
+        }
+      }
+    },
+    "Power Assertions (IOKit)" : {
+      "comment" : "Status bar menu option: the Mac is kept awake with IOKit power assertions.",
+      "extractionState" : "manual",
+      "localizations" : {
+        "it" : {
+          "stringUnit" : {
+            "state" : "translated",
+            "value" : "Power assertion (IOKit)"
           }
         }
       }

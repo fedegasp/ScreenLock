@@ -5,21 +5,30 @@
 //  Created by Federico Gasperini on 22/10/26.
 //
 
-import IOKit.pwr_mgt
 import Foundation
+import IOKit.pwr_mgt
 
 /// Keeps the Mac awake (system + display) while the lock screen is shown, and
 /// also stops macOS's own screen saver / lock-screen idle timer from firing —
 /// that timer is independent of the sleep-prevention assertions above, so
 /// without the periodic "user activity" heartbeat below the real system lock
 /// screen would still kick in behind our window after a few idle minutes.
-final class PowerAssertion {
+///
+/// Nothing moves on screen and no permission is needed, which is why this is the
+/// default; [MouseJiggler](MouseJiggler.swift) is the alternative, for when other
+/// apps need to see real input events too.
+final class PowerAssertion: KeepAwakeStrategy {
     private var systemAssertionID: IOPMAssertionID = 0
     private var displayAssertionID: IOPMAssertionID = 0
     private var userActivityAssertionID: IOPMAssertionID = 0
     private var heartbeat: Timer?
     private var isActive = false
     private let reason = "ScreenLock active" as CFString
+
+    let name = "power assertions (IOKit)"
+
+    /// IOKit assertions need no permission and are always usable.
+    var isAvailable: Bool { true }
 
     func acquire() {
         guard !isActive else {
