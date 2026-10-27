@@ -19,11 +19,18 @@ enum LockBackgroundStyle: String, CaseIterable {
     var menuTitle: String {
         switch self {
         case .black:
-            String(localized: "Black Background", comment: "Status bar menu option: the lock screen is filled with solid black.")
+            String(
+                localized: "Black Background",
+                comment: "Status bar menu option: the lock screen is filled with solid black.")
         case .glass:
-            String(localized: "Glass Background", comment: "Status bar menu option: the lock screen is a frosted/blurred translucent background.")
+            String(
+                localized: "Glass Background",
+                comment: "Status bar menu option: the lock screen is a frosted/blurred translucent background.")
         case .transparent:
-            String(localized: "Transparent Background", comment: "Status bar menu option: the lock screen has no background, the desktop stays visible behind it.")
+            String(
+                localized: "Transparent Background",
+                comment:
+                    "Status bar menu option: the lock screen has no background, the desktop stays visible behind it.")
         }
     }
 }
@@ -111,6 +118,8 @@ final class Preferences: ObservableObject {
         }
         keepAwakeMode = storedMode.flatMap(KeepAwakeMode.init(rawValue:)) ?? .ioKit
 
-        Log.preferences.debug("Loaded: showsStatusItem = \(self.showsStatusItem), backgroundStyle = \(self.backgroundStyle.rawValue), keepAwakeMode = \(self.keepAwakeMode.rawValue)")
+        Log.preferences.debug(
+            "Loaded: showsStatusItem = \(self.showsStatusItem), backgroundStyle = \(self.backgroundStyle.rawValue), keepAwakeMode = \(self.keepAwakeMode.rawValue)"
+        )
     }
 }

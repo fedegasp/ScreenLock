@@ -28,13 +28,17 @@ struct LockView: View {
                 Group {
                     switch coordinator.phase {
                     case .idle:
-                        Text("Waiting for authentication…", comment: "Lock screen status before the authentication prompt appears.")
+                        Text(
+                            "Waiting for authentication…",
+                            comment: "Lock screen status before the authentication prompt appears.")
                     case .authenticating:
                         HStack(spacing: 10) {
                             ProgressView()
                                 .controlSize(.small)
                                 .tint(.white)
-                            Text("Verifying…", comment: "Lock screen status while the Touch ID/password prompt is on screen.")
+                            Text(
+                                "Verifying…",
+                                comment: "Lock screen status while the Touch ID/password prompt is on screen.")
                         }
                     case .failed(let message):
                         Text(message)
@@ -46,9 +50,14 @@ struct LockView: View {
 
                 Group {
                     if coordinator.phase == .idle {
-                        Text("Press ⌃⌥⌘L to unlock", comment: "Hint on the lock screen explaining how to bring up the authentication prompt.")
-                    } else {
-                        Text("Press ⌃⌥⌘L to try again", comment: "Hint on the lock screen explaining how to show the authentication prompt again.")
+                        Text(
+                            "Press ⌃⌥⌘L to unlock",
+                            comment: "Hint on the lock screen explaining how to bring up the authentication prompt.")
+                    }
+                    else {
+                        Text(
+                            "Press ⌃⌥⌘L to try again",
+                            comment: "Hint on the lock screen explaining how to show the authentication prompt again.")
                     }
                 }
                 .font(.system(size: 12))
@@ -62,9 +71,13 @@ struct LockView: View {
         .frame(maxWidth: .infinity, maxHeight: .infinity)
         .overlay(alignment: .bottomLeading) {
             Toggle(isOn: $preferences.showsStatusItem) {
-                Text("Show menu bar icon", comment: "Switch in the bottom-left corner of the lock screen that shows or hides the menu bar icon.")
-                    .font(.system(size: 12))
-                    .foregroundStyle(.white.opacity(0.6))
+                Text(
+                    "Show menu bar icon",
+                    comment:
+                        "Switch in the bottom-left corner of the lock screen that shows or hides the menu bar icon."
+                )
+                .font(.system(size: 12))
+                .foregroundStyle(.white.opacity(0.6))
             }
             .toggleStyle(.checkbox)
             .controlSize(.large)

@@ -41,7 +41,8 @@ final class LockWindowController {
         windows.forEach { $0.orderFrontRegardless() }
         windows.first?.makeKeyAndOrderFront(nil)
 
-        Log.window.notice("\(self.windows.count) lock window(s) shown; key window: \(self.windows.first?.isKeyWindow ?? false)")
+        Log.window.notice(
+            "\(self.windows.count) lock window(s) shown; key window: \(self.windows.first?.isKeyWindow ?? false)")
     }
 
     func rebuildForCurrentScreens() {
@@ -80,7 +81,7 @@ final class LockWindowController {
         window.level = .screenSaver
         window.collectionBehavior = [.canJoinAllSpaces, .fullScreenAuxiliary, .stationary, .ignoresCycle]
         window.isMovable = false
-        window.ignoresMouseEvents = false // capture input so it cannot reach apps below
+        window.ignoresMouseEvents = false  // capture input so it cannot reach apps below
         window.hidesOnDeactivate = false
         window.setFrame(screen.frame, display: true)
 
@@ -89,7 +90,9 @@ final class LockWindowController {
         window.contentView = hostingView
 
         let frame = screen.frame
-        Log.window.debug("Window created for screen \(Int(frame.width))x\(Int(frame.height)) at (\(Int(frame.origin.x)), \(Int(frame.origin.y))), style \(preferences.backgroundStyle.rawValue)")
+        Log.window.debug(
+            "Window created for screen \(Int(frame.width))x\(Int(frame.height)) at (\(Int(frame.origin.x)), \(Int(frame.origin.y))), style \(preferences.backgroundStyle.rawValue)"
+        )
 
         return window
     }

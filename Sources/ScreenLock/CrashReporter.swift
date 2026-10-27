@@ -24,7 +24,7 @@ enum CrashReporter {
     /// is the polite "please quit", e.g. plain `killall ScreenLock` — but it is
     /// worth distinguishing from a real one in the log.
     private static let fatalSignals: [Int32] = [
-        SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGSYS, SIGTRAP, SIGTERM
+        SIGABRT, SIGBUS, SIGFPE, SIGILL, SIGSEGV, SIGSYS, SIGTRAP, SIGTERM,
     ]
 
     /// Must run before anything can crash, i.e. first thing at launch.

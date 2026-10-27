@@ -79,7 +79,9 @@ final class SystemLockMonitor {
     @objc private func systemDidUnlock() {
         let sessionIsLocked = Self.isSessionScreenLocked
         guard isArmed, sawSystemLock, !sessionIsLocked else {
-            Log.systemLock.debug("screenIsUnlocked ignored (armed: \(self.isArmed), saw system lock: \(self.sawSystemLock), session locked: \(sessionIsLocked))")
+            Log.systemLock.debug(
+                "screenIsUnlocked ignored (armed: \(self.isArmed), saw system lock: \(self.sawSystemLock), session locked: \(sessionIsLocked))"
+            )
             return
         }
         sawSystemLock = false
@@ -89,7 +91,8 @@ final class SystemLockMonitor {
 
     private static var isSessionScreenLocked: Bool {
         guard let info = CGSessionCopyCurrentDictionary() as? [String: Any] else {
-            Log.systemLock.error("CGSessionCopyCurrentDictionary() returned nothing: session state unknown, assuming unlocked")
+            Log.systemLock.error(
+                "CGSessionCopyCurrentDictionary() returned nothing: session state unknown, assuming unlocked")
             return false
         }
         return info["CGSSessionScreenIsLocked"] as? Bool ?? false

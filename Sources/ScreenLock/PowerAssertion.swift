@@ -45,7 +45,8 @@ final class PowerAssertion: KeepAwakeStrategy {
         )
         if systemStatus == kIOReturnSuccess {
             Log.power.debug("PreventUserIdleSystemSleep assertion acquired (id \(self.systemAssertionID))")
-        } else {
+        }
+        else {
             // The Mac can still fall asleep under us: expect the lock to vanish
             // behind the system login window after the idle timeout.
             Log.power.error("PreventUserIdleSystemSleep assertion failed: \(describe(status: systemStatus))")
@@ -59,7 +60,8 @@ final class PowerAssertion: KeepAwakeStrategy {
         )
         if displayStatus == kIOReturnSuccess {
             Log.power.debug("PreventUserIdleDisplaySleep assertion acquired (id \(self.displayAssertionID))")
-        } else {
+        }
+        else {
             Log.power.error("PreventUserIdleDisplaySleep assertion failed: \(describe(status: displayStatus))")
         }
 
@@ -77,7 +79,8 @@ final class PowerAssertion: KeepAwakeStrategy {
         let status = IOPMAssertionDeclareUserActivity(reason, kIOPMUserActiveLocal, &userActivityAssertionID)
         if status == kIOReturnSuccess {
             Log.power.debug("User activity declared (idle timer reset)")
-        } else {
+        }
+        else {
             // Without this the real macOS lock screen appears behind our window.
             Log.power.error("IOPMAssertionDeclareUserActivity failed: \(describe(status: status))")
         }

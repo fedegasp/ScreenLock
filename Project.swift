@@ -59,6 +59,6 @@ let project = Project(
                     "ASSETCATALOG_COMPILER_GLOBAL_ACCENT_COLOR_NAME": "",
                 ]
             )
-        ),
+        )
     ]
 )

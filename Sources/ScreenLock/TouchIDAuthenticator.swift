@@ -25,33 +25,41 @@ final class TouchIDAuthenticator {
         var error: NSError?
         let isAvailable = LAContext().canEvaluatePolicy(.deviceOwnerAuthentication, error: &error)
         if !isAvailable {
-            Log.auth.error("deviceOwnerAuthentication unavailable: \(error?.localizedDescription ?? "no error") (code \(error?.code ?? 0))")
+            Log.auth.error(
+                "deviceOwnerAuthentication unavailable: \(error?.localizedDescription ?? "no error") (code \(error?.code ?? 0))"
+            )
         }
         return isAvailable
     }
 
     func authenticate(reason: String, completion: @escaping (AuthOutcome) -> Void) {
         let context = LAContext()
-        context.localizedCancelTitle = String(localized: "Cancel", comment: "Cancel button title of the Touch ID/password prompt.")
+        context.localizedCancelTitle = String(
+            localized: "Cancel", comment: "Cancel button title of the Touch ID/password prompt.")
         context.touchIDAuthenticationAllowableReuseDuration = 0
 
         let policy: LAPolicy
         var biometricsError: NSError?
         if context.canEvaluatePolicy(.deviceOwnerAuthenticationWithBiometrics, error: &biometricsError) {
             policy = .deviceOwnerAuthenticationWithBiometrics
-            context.localizedFallbackTitle = "" // hide "Use Password…" while Touch ID works
+            context.localizedFallbackTitle = ""  // hide "Use Password…" while Touch ID works
             Log.auth.notice("Using Touch ID (biometryType \(context.biometryType.rawValue))")
-        } else {
-            policy = .deviceOwnerAuthentication // goes straight to the password prompt
-            Log.auth.notice("Touch ID unusable, falling back to the login password: \(biometricsError?.localizedDescription ?? "no error") (code \(biometricsError?.code ?? 0))")
+        }
+        else {
+            policy = .deviceOwnerAuthentication  // goes straight to the password prompt
+            Log.auth.notice(
+                "Touch ID unusable, falling back to the login password: \(biometricsError?.localizedDescription ?? "no error") (code \(biometricsError?.code ?? 0))"
+            )
         }
 
         var error: NSError?
         guard context.canEvaluatePolicy(policy, error: &error) else {
-            let message = error?.localizedDescription ?? String(
-                localized: "Authentication is not available on this Mac.",
-                comment: "Fallback message shown on the lock screen when no authentication policy can be evaluated."
-            )
+            let message =
+                error?.localizedDescription
+                ?? String(
+                    localized: "Authentication is not available on this Mac.",
+                    comment: "Fallback message shown on the lock screen when no authentication policy can be evaluated."
+                )
             Log.auth.error("No evaluable policy: \(message) (code \(error?.code ?? 0))")
             completion(.failure(message))
             return
@@ -66,12 +74,16 @@ final class TouchIDAuthenticator {
                 if success {
                     Log.auth.notice("Authentication succeeded")
                     completion(.success)
-                } else {
+                }
+                else {
                     let nsError = evalError as NSError?
-                    let message = nsError?.localizedDescription ?? String(
-                        localized: "Authentication failed.",
-                        comment: "Fallback message shown on the lock screen when Touch ID/password verification fails without a system error description."
-                    )
+                    let message =
+                        nsError?.localizedDescription
+                        ?? String(
+                            localized: "Authentication failed.",
+                            comment:
+                                "Fallback message shown on the lock screen when Touch ID/password verification fails without a system error description."
+                        )
                     // Codes worth recognizing: -2 userCancel, -4 systemCancel,
                     // -8 biometryLockout, -9 appCancel (our own invalidate()).
                     Log.auth.notice("Authentication failed: \(message) (code \(nsError?.code ?? 0))")

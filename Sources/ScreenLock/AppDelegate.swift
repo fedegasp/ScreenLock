@@ -264,7 +264,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         Log.lock.debug("Trigger received (locked: \(self.isLocked))")
         if isLocked {
             retryAuthentication()
-        } else {
+        }
+        else {
             lockScreen()
         }
     }
@@ -279,10 +280,12 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
             let alert = NSAlert()
             alert.messageText = String(
                 localized: "Authentication Unavailable",
-                comment: "Alert title shown when the lock cannot be engaged because no authentication method is available."
+                comment:
+                    "Alert title shown when the lock cannot be engaged because no authentication method is available."
             )
             alert.informativeText = String(
-                localized: "The lock can't be engaged: neither Touch ID nor the login password can be verified on this Mac (or in this session). To avoid getting locked out, the lock won't be activated.",
+                localized:
+                    "The lock can't be engaged: neither Touch ID nor the login password can be verified on this Mac (or in this session). To avoid getting locked out, the lock won't be activated.",
                 comment: "Alert message explaining why the lock was not engaged."
             )
             alert.alertStyle = .warning
@@ -291,7 +294,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         }
 
         isLocked = true
-        Log.lock.notice("Locking (\(NSScreen.screens.count) screen(s), style \(self.preferences.backgroundStyle.rawValue))")
+        Log.lock.notice(
+            "Locking (\(NSScreen.screens.count) screen(s), style \(self.preferences.backgroundStyle.rawValue))")
 
         // The authentication prompt is not shown automatically: the screen stays
         // black until the user asks for it with ⌃⌥⌘L, so locking never steals the
@@ -323,8 +327,10 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         if app.activationPolicy == .regular {
             Log.lock.notice("\(identifier) activated during authentication: taking focus back")
             reassertLock()
-        } else {
-            Log.lock.debug("\(identifier) activated during authentication (policy \(app.activationPolicy.rawValue)): left alone")
+        }
+        else {
+            Log.lock.debug(
+                "\(identifier) activated during authentication (policy \(app.activationPolicy.rawValue)): left alone")
         }
     }
 
@@ -346,9 +352,14 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
         // we are not the active app): compare what actually stuck.
         let applied = NSApp.presentationOptions
         if applied == options {
-            Log.lock.debug("Lock re-asserted (presentationOptions 0x\(String(applied.rawValue, radix: 16)), active: \(NSApp.isActive))")
-        } else {
-            Log.lock.error("presentationOptions not fully applied: requested 0x\(String(options.rawValue, radix: 16)), got 0x\(String(applied.rawValue, radix: 16))")
+            Log.lock.debug(
+                "Lock re-asserted (presentationOptions 0x\(String(applied.rawValue, radix: 16)), active: \(NSApp.isActive))"
+            )
+        }
+        else {
+            Log.lock.error(
+                "presentationOptions not fully applied: requested 0x\(String(options.rawValue, radix: 16)), got 0x\(String(applied.rawValue, radix: 16))"
+            )
         }
     }
 
@@ -374,7 +385,8 @@ final class AppDelegate: NSObject, NSApplicationDelegate {
 
         let reason = String(
             localized: "unlock the screen",
-            comment: "Reason passed to LocalAuthentication; macOS displays it as “ScreenLock is trying to <reason>.”, so it must complete that sentence."
+            comment:
+                "Reason passed to LocalAuthentication; macOS displays it as “ScreenLock is trying to <reason>.”, so it must complete that sentence."
         )
         authenticator.authenticate(reason: reason) { [weak self] outcome in
             guard let self else { return }

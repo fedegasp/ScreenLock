@@ -145,10 +145,12 @@ private final class FileLog {
                 at: fileURL.deletingLastPathComponent(),
                 withIntermediateDirectories: true
             )
-        } catch {
+        }
+        catch {
             isDisabled = true
             Logger(subsystem: AppLog.subsystem, category: "app")
-                .error("File log disabled, cannot create the directory: \(error.localizedDescription, privacy: .public)")
+                .error(
+                    "File log disabled, cannot create the directory: \(error.localizedDescription, privacy: .public)")
             return
         }
 
@@ -161,7 +163,9 @@ private final class FileLog {
         guard descriptor >= 0 else {
             isDisabled = true
             Logger(subsystem: AppLog.subsystem, category: "app")
-                .error("File log disabled, cannot open \(fileURL.path, privacy: .public): errno \(errno, privacy: .public)")
+                .error(
+                    "File log disabled, cannot open \(fileURL.path, privacy: .public): errno \(errno, privacy: .public)"
+                )
             return
         }
 
